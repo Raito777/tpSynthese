@@ -63,17 +63,62 @@ int main()
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
+
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+
+    // GLuint vbo;
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    GLfloat vertices[] = { -0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f };
+
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(0,vbo);
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+
+    glBindVertexArray(vao);
+
+    const GLuint VERTEX_ATTR_POSITION = 0;
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), 0);
+
+    glBindBuffer(0,vbo);
+
+    glBindVertexArray(0);
+
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(1.f, 0.5f, 0.5f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        glBindVertexArray(vao);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glBindVertexArray(0);
+
+        glBindBuffer(0,vbo);
+
+        
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
         /* Poll for and process events */
         glfwPollEvents();
     }
 
+    
+    glDeleteBuffers(0, &vbo);
+    glDeleteVertexArrays(0, &vao);
+
     glfwTerminate();
+
     return 0;
 }
