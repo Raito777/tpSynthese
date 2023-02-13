@@ -7,4 +7,3 @@ out vec3 fFragColor;
 void main() {
     fFragColor = vColor;
 }
-
