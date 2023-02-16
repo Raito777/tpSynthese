@@ -1,6 +1,8 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <glimac/Program.hpp>
+#include <glimac/FilePath.hpp>
 
 int window_width  = 1280;
 int window_height = 720;
@@ -43,6 +45,8 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
     GLFWwindow* window = glfwCreateWindow(window_width, window_height, "TP2", nullptr, nullptr);
+
+
     if (!window) {
         glfwTerminate();
         return -1;
@@ -63,16 +67,56 @@ int main()
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+
+    // GLuint vbo;
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    GLfloat vertices[] = { -0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f };
+
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(0,vbo);
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+
+    glBindVertexArray(vao);
+
+    const GLuint VERTEX_ATTR_POSITION = 0;
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), 0);
+
+    glBindBuffer(0,vbo);
+
+    glBindVertexArray(0);
+
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.5f, 0.5f, 1.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
+        
+        glBindVertexArray(vao);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glBindVertexArray(0);
+
+        glBindBuffer(0,vbo);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
         /* Poll for and process events */
         glfwPollEvents();
     }
+
+    glDeleteBuffers(0, &vbo);
+    glDeleteVertexArrays(0, &vao);
 
     glfwTerminate();
     return 0;

@@ -5,7 +5,6 @@
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>
 #include <iostream>
-#include <vector>
 
 int window_width  = 1280;
 int window_height = 720;
@@ -92,48 +91,20 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     // GLuint vbo;
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    // Vertex2DColor vertices[] = { 
-    //     Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
-    //     Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
-    //     Vertex2DColor(glm::vec2(0, 0.5), glm::vec3(0, 0, 1)),
-    // };
+    Vertex2DColor vertices[] = { 
+        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
+        Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
+        Vertex2DColor(glm::vec2(-0.5, 0.5), glm::vec3(0, 0, 1)),
+        Vertex2DColor(glm::vec2(-0.5, 0.5), glm::vec3(0, 0, 1)),
+        Vertex2DColor(glm::vec2(0.5, 0.5), glm::vec3(0, 1, 0)),
+        Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(1, 0, 0)),
+    };
 
-    std::vector<Vertex2DColor> points;
-    points.push_back(Vertex2DColor(glm::vec2(0, 0), glm::vec3(0, 0, 1)));
-    const float nb_points = 100;
-    const float rayon = 0.4;
-
-    for(float i = 0; i < nb_points; i++){
-        points.push_back(Vertex2DColor(glm::vec2(rayon*glm::cos(2.f*glm::pi<float>()*(i/nb_points)), rayon*glm::sin(2.f*glm::pi<float>()*(i/nb_points))), glm::vec3(0, 0, 1)));
-        points.push_back(Vertex2DColor(glm::vec2(rayon*glm::cos(2.f*glm::pi<float>()*(i+1/nb_points)), rayon*glm::sin(2.f*glm::pi<float>()*(i+1/nb_points))), glm::vec3(0, 0, 1)));
-
-    }
     // GLfloat vertices[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f};
 
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vertex2DColor), points.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(Vertex2DColor), vertices, GL_STATIC_DRAW);
 
     glBindBuffer(0, vbo);
-
-    // => Creation du IBO
-    GLuint ibo;
-    glGenBuffers(1, &ibo);
-
-    // => On bind sur GL_ELEMENT_ARRAY_BUFFER, cible reservée pour les IBOs
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-    std::vector<uint32_t> indices;
-    for(size_t i = 0; i < nb_points*(2/3); i++){
-        if(i % 3 != 0){
-            indices.push_back(i);
-        }else{
-            indices.push_back(0);
-            i--;
-        }
-    }
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -163,7 +134,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         glBindVertexArray(vao);
 
-        glDrawArrays(GL_TRIANGLES, 0, points.size());
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glBindVertexArray(0);
 
