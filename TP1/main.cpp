@@ -37,9 +37,9 @@ struct Vertex2DColor {
     glm::vec3 m_color;
 
     Vertex2DColor(){};
-    Vertex2DColor(glm::vec2 position, glm::vec3 color) : m_position(position), m_color(color) {};
-
-}; 
+    Vertex2DColor(glm::vec2 position, glm::vec3 color)
+        : m_position(position), m_color(color){};
+};
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
@@ -77,10 +77,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
-    //C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
-    glimac::FilePath applicationPath("/home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders");
+    // C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
+    /// home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders
+    glimac::FilePath applicationPath("C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders");
 
-    std::cout << argv[0] << "\n";
+    // std::cout << argv[0] << "\n";
 
     glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "shaders/triangle.vs.glsl",
                                                   applicationPath.dirPath() + "shaders/triangle.fs.glsl");
@@ -92,7 +93,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     // GLuint vbo;
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    // Vertex2DColor vertices[] = { 
+    // Vertex2DColor vertices[] = {
     //     Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
     //     Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
     //     Vertex2DColor(glm::vec2(0, 0.5), glm::vec3(0, 0, 1)),
@@ -100,13 +101,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     std::vector<Vertex2DColor> points;
     points.push_back(Vertex2DColor(glm::vec2(0, 0), glm::vec3(0, 0, 1)));
-    const float nb_points = 100;
-    const float rayon = 0.4;
+    const double nb_points = 27;
+    const double rayon     = 0.4;
 
-    for(float i = 0; i < nb_points; i++){
-        points.push_back(Vertex2DColor(glm::vec2(rayon*glm::cos(2.f*glm::pi<float>()*(i/nb_points)), rayon*glm::sin(2.f*glm::pi<float>()*(i/nb_points))), glm::vec3(0, 0, 1)));
-        points.push_back(Vertex2DColor(glm::vec2(rayon*glm::cos(2.f*glm::pi<float>()*(i+1/nb_points)), rayon*glm::sin(2.f*glm::pi<float>()*(i+1/nb_points))), glm::vec3(0, 0, 1)));
-
+    for (double i = 0; i < nb_points + 1; i++) {
+        points.push_back(Vertex2DColor(glm::vec2(rayon * glm::cos(2.f * glm::pi<double>() * (i / nb_points)), rayon * glm::sin(2.f * glm::pi<double>() * (i / nb_points))), glm::vec3(0, 0, 1)));
+        // points.push_back(Vertex2DColor(glm::vec2(rayon * glm::cos(2.f * glm::pi<double>() * ((i + 1) / nb_points)), rayon * glm::sin(2.f * glm::pi<double>() * ((i + 1) / nb_points))), glm::vec3(0, 0, 1)));
     }
     // GLfloat vertices[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f};
 
@@ -121,17 +121,25 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     // => On bind sur GL_ELEMENT_ARRAY_BUFFER, cible reservée pour les IBOs
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
-    std::vector<uint32_t> indices;
-    for(size_t i = 0; i < nb_points*(2/3); i++){
-        if(i % 3 != 0){
-            indices.push_back(i);
-        }else{
-            indices.push_back(0);
-            i--;
+    uint32_t indices[84];
+    int      k = 1;
+    for (GLsizei i = 0; i < 83; i++) {
+        if (i % 3 == 0) {
+            indices[i] = 0;
+            k--;
+        }
+        else {
+            indices[i] = k;
+            k++;
         }
     }
+    indices[83] = indices[2];
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
+    for (int i = 0; i < 84; i++) {
+        std::cout << indices[i] << " ";
+    }
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 84 * sizeof(uint32_t), &indices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -140,13 +148,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     glBindVertexArray(vao);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+
     const GLuint VERTEX_ATTR_POSITION = 3;
     const GLuint VERTEX_ATTR_COLOR    = 8;
 
     glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
     glEnableVertexAttribArray(VERTEX_ATTR_COLOR);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor), 0);
     glVertexAttribPointer(VERTEX_ATTR_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor), (const GLvoid*)(offsetof(Vertex2DColor, m_color)));
@@ -163,7 +171,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         glBindVertexArray(vao);
 
-        glDrawArrays(GL_TRIANGLES, 0, points.size());
+        glDrawElements(GL_TRIANGLES, 84, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
 
