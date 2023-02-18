@@ -5,7 +5,6 @@
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>
 #include <iostream>
-#include <vector>
 
 int window_width  = 1280;
 int window_height = 720;
@@ -78,13 +77,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     glfwSetWindowSizeCallback(window, &size_callback);
 
     // C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
-    /// home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders
+    // /home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders
     glimac::FilePath applicationPath("C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders");
 
-    // std::cout << argv[0] << "\n";
+    std::cout << argv[0] << "\n";
 
-    glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "shaders/triangle.vs.glsl",
-                                                  applicationPath.dirPath() + "shaders/triangle.fs.glsl");
+    glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "shaders/color2D.vs.glsl",
+                                                  applicationPath.dirPath() + "shaders/color2D.fs.glsl");
     program.use();
 
     GLuint vbo;
@@ -93,68 +92,29 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     // GLuint vbo;
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    // Vertex2DColor vertices[] = {
-    //     Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
-    //     Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
-    //     Vertex2DColor(glm::vec2(0, 0.5), glm::vec3(0, 0, 1)),
-    // };
+    Vertex2DColor vertices[] = {
+        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
+        Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
+        Vertex2DColor(glm::vec2(0, 0.5), glm::vec3(0, 0, 1))};
 
-    std::vector<Vertex2DColor> points;
-    points.push_back(Vertex2DColor(glm::vec2(0, 0), glm::vec3(0, 0, 1)));
-    const double nb_points = 27;
-    const double rayon     = 0.4;
-
-    for (double i = 0; i < nb_points + 1; i++) {
-        points.push_back(Vertex2DColor(glm::vec2(rayon * glm::cos(2.f * glm::pi<double>() * (i / nb_points)), rayon * glm::sin(2.f * glm::pi<double>() * (i / nb_points))), glm::vec3(0, 0, 1)));
-        // points.push_back(Vertex2DColor(glm::vec2(rayon * glm::cos(2.f * glm::pi<double>() * ((i + 1) / nb_points)), rayon * glm::sin(2.f * glm::pi<double>() * ((i + 1) / nb_points))), glm::vec3(0, 0, 1)));
-    }
     // GLfloat vertices[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f};
 
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vertex2DColor), points.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DColor), vertices, GL_STATIC_DRAW);
 
     glBindBuffer(0, vbo);
-
-    // => Creation du IBO
-    GLuint ibo;
-    glGenBuffers(1, &ibo);
-
-    // => On bind sur GL_ELEMENT_ARRAY_BUFFER, cible reservée pour les IBOs
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-    uint32_t indices[84];
-    int      k = 1;
-    for (GLsizei i = 0; i < 83; i++) {
-        if (i % 3 == 0) {
-            indices[i] = 0;
-            k--;
-        }
-        else {
-            indices[i] = k;
-            k++;
-        }
-    }
-    indices[83] = indices[2];
-
-    for (int i = 0; i < 84; i++) {
-        std::cout << indices[i] << " ";
-    }
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 84 * sizeof(uint32_t), &indices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
 
     glBindVertexArray(vao);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-    const GLuint VERTEX_ATTR_POSITION = 3;
-    const GLuint VERTEX_ATTR_COLOR    = 8;
+    const GLuint VERTEX_ATTR_POSITION = 0;
+    const GLuint VERTEX_ATTR_COLOR    = 1;
 
     glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
     glEnableVertexAttribArray(VERTEX_ATTR_COLOR);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor), 0);
     glVertexAttribPointer(VERTEX_ATTR_COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex2DColor), (const GLvoid*)(offsetof(Vertex2DColor, m_color)));
@@ -171,7 +131,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         glBindVertexArray(vao);
 
-        glDrawElements(GL_TRIANGLES, 84, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glBindVertexArray(0);
 
