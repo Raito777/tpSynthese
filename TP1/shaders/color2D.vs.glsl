@@ -4,6 +4,7 @@ layout(location = 0) in vec2 aVertexPosition;
 layout(location = 1) in vec3 aVertexColor;
 
 out vec2 vFragPosition;
+out vec4 centerPosition;
 out vec3 vFragColor;
 
 
@@ -22,7 +23,9 @@ mat3 rotate(float a){
 
 
 void main() {
-  gl_Position = vec4((vec3(aVertexPosition, 1)*rotate(45)*translate(0.5,0)*scale(0.5,0.5)).xy, 0, 1);
   vFragColor = aVertexColor;
   vFragPosition = aVertexPosition;
+  centerPosition = gl_Position;
+  gl_Position = vec4((vec3(aVertexPosition, 1)*rotate(45)*translate(0.5,0)*scale(2,2)).xy, 0, 1);
+
 };
