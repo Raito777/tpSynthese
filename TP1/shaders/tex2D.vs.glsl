@@ -8,7 +8,6 @@ out vec2 vTextureCoordinate;
 
 uniform float uTime;
 
-uniform mat3 uRotateMatrix;
 uniform mat3 uModelMatrix;
 
 void main() {

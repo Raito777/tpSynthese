@@ -7,6 +7,7 @@
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>
 #include <iostream>
+#include <vector>
 
 int window_width  = 1280;
 int window_height = 720;
@@ -95,13 +96,17 @@ int main()
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
-    std::unique_ptr<glimac::Image> pImage = glimac::loadImage("C:/Users/Quentin/Desktop/imac/s4/tpSynthese/assets/textures/triforce.png");
+    std::unique_ptr<glimac::Image> pImage = glimac::loadImage("C:/Users/Quentin/Desktop/imac/s4/tpSynthese/assets/textures/triforce_2.png");
 
     GLuint texture;
 
     glGenTextures(1, &texture);
 
     glBindTexture(GL_TEXTURE_2D, texture);
+
+    // transparence
+    //  glEnable(GL_BLEND);
+    //  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pImage->getWidth(), pImage->getHeight(), 0, GL_RGBA, GL_FLOAT, pImage->getPixels());
 
@@ -125,9 +130,9 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     Vertex2DUV vertices[] = {
-        Vertex2DUV(glm::vec2(-1, -1), glm::vec2(0, 1)),
-        Vertex2DUV(glm::vec2(1, -1), glm::vec2(1, 1)),
-        Vertex2DUV(glm::vec2(0, 1), glm::vec2(0.5, 0))};
+        Vertex2DUV(glm::vec2(-0.2, -0.2), glm::vec2(0, 1)),
+        Vertex2DUV(glm::vec2(0.2, -0.2), glm::vec2(1, 1)),
+        Vertex2DUV(glm::vec2(0, 0.2), glm::vec2(0.5, 0))};
 
     glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DUV), vertices, GL_STATIC_DRAW);
 
@@ -157,9 +162,14 @@ int main()
     GLint uRotateMatrix = glGetUniformLocation(program.getGLId(), "uRotateMatrix");
     GLint uModelMatrix  = glGetUniformLocation(program.getGLId(), "uModelMatrix");
 
-    glm::mat3 transformMatrix;
+    float angle = 1.f;
 
-    float angle = 0.0f;
+    std::vector<glm::mat3> transformations;
+    transformations.push_back(translate(-0.5f, -0.5f));
+    transformations.push_back(translate(0.5f, 0.5f));
+    transformations.push_back(translate(-0.5f, 0.5f));
+    transformations.push_back(translate(0.5f, -0.5f));
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.5f, 0.5f, 1.f, 1.f);
@@ -167,16 +177,17 @@ int main()
 
         glBindVertexArray(vao);
 
-        transformMatrix = translate(0.f, 0.f) * rotate(angle);
-        // angle += 0.5f;
-
-        glUniformMatrix3fv(uModelMatrix, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-
         glBindTexture(GL_TEXTURE_2D, texture);
 
         glUniform1i(uTexture, 0);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        transformations[0] = transformations[0] * rotate(angle);
+        transformations[1] = transformations[1] * rotate(-angle);
+
+        for (size_t i = 0; i < transformations.size(); i++) {
+            glUniformMatrix3fv(uModelMatrix, 1, GL_FALSE, glm::value_ptr(transformations[i]));
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
