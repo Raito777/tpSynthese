@@ -46,20 +46,20 @@ struct Vertex2DUV {
 glm::mat3 translate(float tx, float ty)
 {
     return glm::mat3(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(tx, ty, 1));
-};
+}
 
 glm::mat3 scale(float sx, float sy)
 {
     return glm::mat3(glm::vec3(sx, 0, 0), glm::vec3(0, sy, 0), glm::vec3(0, 0, 1));
-};
+}
 
 glm::mat3 rotate(float a)
 {
     float b = glm::radians(a);
     return glm::mat3(glm::vec3(glm::cos(b), sin(b), 0), glm::vec3(-glm::sin(b), glm::cos(b), 0), glm::vec3(0, 0, 1));
-};
+}
 
-int main()
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
     /* Initialize the library */
     if (!glfwInit()) {
@@ -96,7 +96,13 @@ int main()
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
-    std::unique_ptr<glimac::Image> pImage = glimac::loadImage("C:/Users/Quentin/Desktop/imac/s4/tpSynthese/assets/textures/triforce_2.png");
+
+///home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders
+//home/6ima2/quentin.augey/Documents/s4/synthese_image/tpsynthese/assets/textures/triforce_2.png
+//C:/Users/Quentin/Desktop/imac/s4/tpSynthese/assets/textures/triforce_2.png
+    std::unique_ptr<glimac::Image> pImage = glimac::loadImage("/home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/assets/textures/triforce_2.png");
+
+    std::cout << argv[0] << "\n";
 
     GLuint texture;
 
@@ -115,7 +121,9 @@ int main()
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    glimac::FilePath applicationPath("C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders");
+    ///home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders
+    //C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
+    glimac::FilePath applicationPath("/home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/TP1/shaders");
 
     glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "shaders/tex2D.vs.glsl",
                                                   applicationPath.dirPath() + "shaders/tex2D.fs.glsl");
@@ -158,8 +166,8 @@ int main()
 
     glBindVertexArray(0);
 
-    GLint uTime         = glGetUniformLocation(program.getGLId(), "uTime");
-    GLint uRotateMatrix = glGetUniformLocation(program.getGLId(), "uRotateMatrix");
+    // GLint uTime         = glGetUniformLocation(program.getGLId(), "uTime");
+    // GLint uRotateMatrix = glGetUniformLocation(program.getGLId(), "uRotateMatrix");
     GLint uModelMatrix  = glGetUniformLocation(program.getGLId(), "uModelMatrix");
 
     float angle = 1.f;
