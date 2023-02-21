@@ -14,7 +14,7 @@ out vec2 vTextureCoordinate;
 
 void main() {
     vPosition = uMVMatrix * vec4(aPosition,1);
-    vNormal = uMVMatrix * vec4(aNormal,0);
+    vNormal = uNormalMatrix * vec4(aNormal,0);
     vTextureCoordinate = aTexCoords;
-    gl_Position = vPosition;
+    gl_Position = uMVPMatrix * vec4(aPosition,1);
 };

@@ -1,12 +1,13 @@
+#include "glm/fwd.hpp"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
-#include <glimac/glm.hpp>
 #include <glimac/FilePath.hpp>
 #include <glimac/Image.hpp>
 #include <glimac/Program.hpp>
 #include <glimac/Sphere.hpp>
 #include <glimac/common.hpp>
+#include <glimac/glm.hpp>
 #include <iostream>
 #include <vector>
 
@@ -64,33 +65,64 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         return -1;
     }
 
-    //C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
-    ///home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/TP1/shaders
-    glimac::FilePath applicationPath("/home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/bin/Debug/TP1");
+    // C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
+    ////home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/bin/Debug/TP1
+
+    glimac::FilePath applicationPath(argv[0]);
+
+    // std::cout << "chemin : " << applicationPath.dirPath() << "\n";
 
     glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "TP1/shaders/3D.vs.glsl",
                                                   applicationPath.dirPath() + "TP1/shaders/normals.fs.glsl");
 
     program.use();
 
+    glimac::Sphere             sphere(1, 32, 16);
+    const glimac::ShapeVertex* vertices = sphere.getDataPointer();
 
-    glimac::Sphere sphere(1, 32, 32);
-    glimac::ShapeVertex sphereVertex;
-    sphereVertex.normal = sphere.getDataPointer()->normal;
-    sphereVertex.position = sphere.getDataPointer()->position;
-    sphereVertex.texCoords = sphere.getDataPointer()->texCoords;
+    std::cout << "normals : " << &vertices->position << "\n";
 
-    GLint uMVPMatrix = glGetUniformLocation(program.getGLId(), "uMVPMatrix");
-    GLint uMVMatrix = glGetUniformLocation(program.getGLId(), "uMVMatrix");
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(glimac::ShapeVertex), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(0, vbo);
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    const GLuint VERTEX_ATTR_POSITION  = 0;
+    const GLuint VERTEX_ATTR_NORMAL    = 1;
+    const GLuint VERTEX_ATTR_TexCoords = 2;
+
+    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
+    glEnableVertexAttribArray(VERTEX_ATTR_TexCoords);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
+    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
+    glVertexAttribPointer(VERTEX_ATTR_TexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
+
+    glBindBuffer(0, vbo);
+
+    glBindVertexArray(0);
+
+    GLint uMVPMatrix    = glGetUniformLocation(program.getGLId(), "uMVPMatrix");
+    GLint uMVMatrix     = glGetUniformLocation(program.getGLId(), "uMVMatrix");
     GLint uNormalMatrix = glGetUniformLocation(program.getGLId(), "uNormalMatrix");
 
     glEnable(GL_DEPTH_TEST);
 
-    glm::mat4 ProjMatrix;
-    glm::mat4 MVMatrix;
-    glm::mat4 NormalMatrix;
+    glm::mat4 ProjMatrix, MVMatrix, NormalMatrix;
 
-
+    ProjMatrix   = glm::perspective(glm::radians(70.f), (GLfloat)window_width / (GLfloat)window_height, 0.1f, 100.f);
+    MVMatrix     = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -5));
+    NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
 
     /* Hook input callbacks */
     glfwSetKeyCallback(window, &key_callback);
@@ -102,13 +134,26 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.f, 0.75f, 0.75f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
+        glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
+        glUniformMatrix4fv(uNormalMatrix, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+        glBindVertexArray(vao);
+
+        glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+
+        glBindVertexArray(0);
+        glBindBuffer(0, vbo);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
         /* Poll for and process events */
         glfwPollEvents();
     }
+    glDeleteBuffers(0, &vbo);
+    glDeleteVertexArrays(0, &vao);
 
     glfwTerminate();
     return 0;
