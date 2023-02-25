@@ -2,13 +2,14 @@
 
 #include <GLFW/glfw3.h>
 
-namespace glimac{
+namespace glimac {
 
 /**
  * @brief Returns the time elapsed since the program started, in seconds
  */
-inline float getTime() {
-    return glfwGetTime();
+inline float getTime()
+{
+    return static_cast<float>(glfwGetTime());
 }
-    
+
 } // namespace glimac
