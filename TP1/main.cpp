@@ -11,24 +11,44 @@
 #include <glimac/glm.hpp>
 #include <iostream>
 #include <vector>
+#include <glimac/TrackballCamera.hpp>
 
 int window_width  = 1280;
 int window_height = 720;
 
+struct Inputs{
+    double yoffset;
+    int mouseButton;
+    glm::vec2 currentPosition;
+    glm::vec2 previousPosition;
+
+};
+
+Inputs myInputs;
+
 static void key_callback(GLFWwindow* /*window*/, int /*key*/, int /*scancode*/, int /*action*/, int /*mods*/)
-{
+{   
+
 }
 
-static void mouse_button_callback(GLFWwindow* /*window*/, int /*button*/, int /*action*/, int /*mods*/)
+static void mouse_button_callback(GLFWwindow* /*window*/, int button, int /*action*/, int /*mods*/)
 {
+    if(myInputs.mouseButton != 0 && button == 0){
+        myInputs.mouseButton = button;
+    }else{
+        myInputs.mouseButton = -1;
+    }
+    std::cout << myInputs.mouseButton << "\n";
 }
 
-static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double /*yoffset*/)
+static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset)
 {
+    myInputs.yoffset = -yoffset*0.5;
 }
 
-static void cursor_position_callback(GLFWwindow* /*window*/, double /*xpos*/, double /*ypos*/)
+static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double ypos)
 {
+    myInputs.currentPosition = glm::vec2(xpos, ypos);
 }
 
 static void size_callback(GLFWwindow* /*window*/, int width, int height)
@@ -109,6 +129,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     // C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
     ////home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/bin/Debug/TP1
 
+
     glimac::FilePath applicationPath(argv[0]);
 
     // std::cout << "chemin : " << applicationPath.dirPath() << "\n";
@@ -187,7 +208,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     std::vector<glm::mat4> transformationsMv;
 
-    size_t nbSphere = 64;
+    size_t nbSphere = 200;
 
     ProjMatrix = glm::perspective(glm::radians(70.f), (GLfloat)window_width / (GLfloat)window_height, 0.1f, 100.f);
     MVMatrix   = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -5));
@@ -203,6 +224,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
+    //getting cursor position
+
+
     std::vector<glm::vec3> randAxes;
     std::vector<glm::vec3> randPoses;
 
@@ -215,10 +239,32 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         transformationsMv.push_back(MVMatrix);
     }
 
+    glimac::TrackballCamera camera;
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.f, 0.75f, 0.75f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+        camera.moveFront(myInputs.yoffset);
+        if(myInputs.currentPosition.x < myInputs.previousPosition.x && myInputs.mouseButton == -1){
+            camera.rotateUp(-5);
+        }
+        if(myInputs.currentPosition.y < myInputs.previousPosition.y && myInputs.mouseButton == -1){
+            camera.rotateLeft(-5);
+        }
+        if(myInputs.currentPosition.x > myInputs.previousPosition.x && myInputs.mouseButton == -1){
+            camera.rotateUp(5);
+        }
+        if(myInputs.currentPosition.y > myInputs.previousPosition.y && myInputs.mouseButton == -1){
+            camera.rotateLeft(5);
+        }
+
+        myInputs.previousPosition = myInputs.currentPosition;
+
+        myInputs.yoffset = 0;
+        transformationsMv[0] = camera.getViewMatrix();
 
         glBindVertexArray(vao);
 
@@ -227,7 +273,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         glUniform1i(earthProgram.uTexture1, 0);
         glUniform1i(earthProgram.uTexture2, 1);
 
-        MVMatrix = glm::rotate(transformationsMv[0], glimac::getTime(), glm::vec3(0, 1, 0));
+        MVMatrix = glm::rotate(transformationsMv[0], 0.f, glm::vec3(0, 1, 0));
 
         glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
         glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
@@ -247,7 +293,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         glBindTexture(GL_TEXTURE_2D, 0);
 
         for (size_t i = 1; i < nbSphere; i++) {
-            transformationsMv[i] = glm::rotate(transformationsMv[0], glimac::getTime(), randAxes[i]);
+            transformationsMv[i] = glm::rotate(transformationsMv[0], 0.f, randAxes[i]);
             transformationsMv[i] = glm::translate(transformationsMv[i], randPoses[i]);         // Translation * Rotation * Translation
             transformationsMv[i] = glm::scale(transformationsMv[i], glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
             glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * transformationsMv[i]));
