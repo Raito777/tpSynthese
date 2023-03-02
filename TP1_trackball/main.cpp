@@ -12,30 +12,22 @@
 #include <iostream>
 #include <vector>
 #include <glimac/TrackballCamera.hpp>
-#include <glimac/FreeflyCamera.hpp>
 
 int window_width  = 1280;
 int window_height = 720;
 
-const int Z = 87;
-const int Q = 65;
-const int S = 83;
-const int D = 68;
-
 struct Inputs{
     double yoffset;
     int mouseButton;
-    int key;
     glm::vec2 currentPosition;
     glm::vec2 previousPosition;
 };
 
 Inputs myInputs;
 
-static void key_callback(GLFWwindow* /*window*/, int key, int /*scancode*/, int /*action*/, int /*mods*/)
+static void key_callback(GLFWwindow* /*window*/, int /*key*/, int /*scancode*/, int /*action*/, int /*mods*/)
 {   
-    myInputs.key = key;
-    std::cout << key << "\n";
+
 }
 
 static void mouse_button_callback(GLFWwindow* /*window*/, int button, int /*action*/, int /*mods*/)
@@ -246,7 +238,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         transformationsMv.push_back(MVMatrix);
     }
 
-    glimac::FreeflyCamera camera;
+    glimac::TrackballCamera camera;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
@@ -254,34 +246,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        //camera.moveFront(myInputs.yoffset);
+        camera.moveFront(myInputs.yoffset);
         if(myInputs.currentPosition.x < myInputs.previousPosition.x && myInputs.mouseButton == -1){
-            camera.rotateLeft(1.f);
+            camera.rotateUp(3);
         }
         if(myInputs.currentPosition.y < myInputs.previousPosition.y && myInputs.mouseButton == -1){
-            camera.rotateUp(1.f);
+            camera.rotateLeft(3);
         }
         if(myInputs.currentPosition.x > myInputs.previousPosition.x && myInputs.mouseButton == -1){
-            camera.rotateLeft(-1.f);
+            camera.rotateUp(-3);
         }
         if(myInputs.currentPosition.y > myInputs.previousPosition.y && myInputs.mouseButton == -1){
-            camera.rotateUp(-1.f);
-        }
-        if(myInputs.key == Z){
-            camera.moveFront(0.1f);
-            myInputs.key = -1;
-        }
-        if(myInputs.key == Q){
-            camera.moveLeft(0.1f);    
-            myInputs.key = -1;
-        }
-        if(myInputs.key == S){
-            camera.moveFront(-0.1f);
-            myInputs.key = -1;
-        }
-        if(myInputs.key == D){
-            camera.moveLeft(-0.1f);
-            myInputs.key = -1;
+            camera.rotateLeft(-3);
         }
 
         myInputs.previousPosition = myInputs.currentPosition;
@@ -296,7 +272,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         glUniform1i(earthProgram.uTexture1, 0);
         glUniform1i(earthProgram.uTexture2, 1);
 
-        MVMatrix = glm::rotate(transformationsMv[0], glimac::getTime(), glm::vec3(0, 1, 0));
+        MVMatrix = glm::rotate(transformationsMv[0], 0.f, glm::vec3(0, 1, 0));
 
         glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
         glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
@@ -316,7 +292,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         glBindTexture(GL_TEXTURE_2D, 0);
 
         for (size_t i = 1; i < nbSphere; i++) {
-            transformationsMv[i] = glm::rotate(transformationsMv[0], glimac::getTime(), randAxes[i]);
+            transformationsMv[i] = glm::rotate(transformationsMv[0], 0.f, randAxes[i]);
             transformationsMv[i] = glm::translate(transformationsMv[i], randPoses[i]);         // Translation * Rotation * Translation
             transformationsMv[i] = glm::scale(transformationsMv[i], glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
             glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * transformationsMv[i]));
