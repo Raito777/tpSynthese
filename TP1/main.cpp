@@ -3,16 +3,16 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <glimac/FilePath.hpp>
+#include <glimac/FreeflyCamera.hpp>
 #include <glimac/Image.hpp>
 #include <glimac/Program.hpp>
 #include <glimac/Sphere.hpp>
+#include <glimac/TrackballCamera.hpp>
 #include <glimac/common.hpp>
 #include <glimac/getTime.hpp>
 #include <glimac/glm.hpp>
 #include <iostream>
 #include <vector>
-#include <glimac/TrackballCamera.hpp>
-#include <glimac/FreeflyCamera.hpp>
 
 int window_width  = 1280;
 int window_height = 720;
@@ -22,10 +22,10 @@ const int Q = 65;
 const int S = 83;
 const int D = 68;
 
-struct Inputs{
-    double yoffset;
-    int mouseButton;
-    int key;
+struct Inputs {
+    double    yoffset;
+    int       mouseButton;
+    int       key;
     glm::vec2 currentPosition;
     glm::vec2 previousPosition;
 };
@@ -33,16 +33,17 @@ struct Inputs{
 Inputs myInputs;
 
 static void key_callback(GLFWwindow* /*window*/, int key, int /*scancode*/, int /*action*/, int /*mods*/)
-{   
+{
     myInputs.key = key;
     std::cout << key << "\n";
 }
 
 static void mouse_button_callback(GLFWwindow* /*window*/, int button, int /*action*/, int /*mods*/)
 {
-    if(myInputs.mouseButton != 0 && button == 0){
+    if (myInputs.mouseButton != 0 && button == 0) {
         myInputs.mouseButton = button;
-    }else{
+    }
+    else {
         myInputs.mouseButton = -1;
     }
     std::cout << myInputs.mouseButton << "\n";
@@ -50,7 +51,7 @@ static void mouse_button_callback(GLFWwindow* /*window*/, int button, int /*acti
 
 static void scroll_callback(GLFWwindow* /*window*/, double /*xoffset*/, double yoffset)
 {
-    myInputs.yoffset = -yoffset*0.5;
+    myInputs.yoffset = -yoffset * 0.5;
 }
 
 static void cursor_position_callback(GLFWwindow* /*window*/, double xpos, double ypos)
@@ -63,46 +64,6 @@ static void size_callback(GLFWwindow* /*window*/, int width, int height)
     window_width  = width;
     window_height = height;
 }
-
-struct EarthProgram {
-    glimac::Program m_Program;
-
-    GLint uMVPMatrix;
-    GLint uMVMatrix;
-    GLint uNormalMatrix;
-    GLint uTexture1;
-    GLint uTexture2;
-
-    EarthProgram(const glimac::FilePath& applicationPath)
-        : m_Program(glimac::loadProgram(applicationPath.dirPath() + "TP1/shaders/3D.vs.glsl",
-                                        applicationPath.dirPath() + "TP1/shaders/multiTex3D.fs.glsl"))
-    {
-        uMVPMatrix    = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
-        uMVMatrix     = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
-        uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
-        uTexture1     = glGetUniformLocation(m_Program.getGLId(), "uTexture1");
-        uTexture2     = glGetUniformLocation(m_Program.getGLId(), "uTexture2");
-    }
-};
-
-struct MoonProgram {
-    glimac::Program m_Program;
-
-    GLint uMVPMatrix;
-    GLint uMVMatrix;
-    GLint uNormalMatrix;
-    GLint uTexture;
-
-    MoonProgram(const glimac::FilePath& applicationPath)
-        : m_Program(glimac::loadProgram(applicationPath.dirPath() + "TP1/shaders/3D.vs.glsl",
-                                        applicationPath.dirPath() + "TP1/shaders/tex3D.fs.glsl"))
-    {
-        uMVPMatrix    = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
-        uMVMatrix     = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
-        uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
-        uTexture      = glGetUniformLocation(m_Program.getGLId(), "uTexture");
-    }
-};
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
@@ -136,45 +97,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     // C:/Users/Quentin/Desktop/imac/s4/tpSynthese/TP1/shaders
     ////home/6ima2/quentin.augey/Documents/s4/synthese_image/tpSynthese/bin/Debug/TP1
 
-
     glimac::FilePath applicationPath(argv[0]);
 
-    // std::cout << "chemin : " << applicationPath.dirPath() << "\n";
+    glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "TP1/shaders/3D.vs.glsl",
+                                                  applicationPath.dirPath() + "TP1/shaders/directionallight.fs.glsl");
 
-    /// home/6ima2/quentin.augey/Documents/s4/synthese_image/GLImac-Template/TP1/shaders
-    // home/6ima2/quentin.augey/Documents/s4/synthese_image/tpsynthese/assets/textures/triforce_2.png
-    // C:/Users/Quentin/Desktop/imac/s4/tpSynthese/assets/textures/triforce_2.png
-    std::unique_ptr<glimac::Image> earthImage = glimac::loadImage(applicationPath.dirPath() + "assets/textures/EarthMap.jpg");
-    std::unique_ptr<glimac::Image> moonImage  = glimac::loadImage(applicationPath.dirPath() + "assets/textures/MoonMap.jpg");
-    std::unique_ptr<glimac::Image> cloudImage = glimac::loadImage(applicationPath.dirPath() + "assets/textures/CloudMap.jpg");
-
-    GLuint textureEarth;
-    GLuint textureMoon;
-    GLuint textureCloud;
-
-    glGenTextures(1, &textureEarth);
-    glBindTexture(GL_TEXTURE_2D, textureEarth);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, earthImage->getWidth(), earthImage->getHeight(), 0, GL_RGBA, GL_FLOAT, earthImage->getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glGenTextures(1, &textureMoon);
-    glBindTexture(GL_TEXTURE_2D, textureMoon);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, moonImage->getWidth(), moonImage->getHeight(), 0, GL_RGBA, GL_FLOAT, moonImage->getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glGenTextures(1, &textureCloud);
-    glBindTexture(GL_TEXTURE_2D, textureCloud);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cloudImage->getWidth(), cloudImage->getHeight(), 0, GL_RGBA, GL_FLOAT, cloudImage->getPixels());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    EarthProgram earthProgram(applicationPath);
-    MoonProgram  moonProgram(applicationPath);
+    program.use();
 
     glimac::Sphere             sphere(1, 32, 16);
     const glimac::ShapeVertex* vertices = sphere.getDataPointer();
@@ -215,7 +143,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     std::vector<glm::mat4> transformationsMv;
 
-    size_t nbSphere = 200;
+    GLint uMVPMatrix    = glGetUniformLocation(program.getGLId(), "uMVPMatrix");
+    GLint uMVMatrix     = glGetUniformLocation(program.getGLId(), "uMVMatrix");
+    GLint uNormalMatrix = glGetUniformLocation(program.getGLId(), "uNormalMatrix");
+
+    size_t nbSphere = 32;
 
     ProjMatrix = glm::perspective(glm::radians(70.f), (GLfloat)window_width / (GLfloat)window_height, 0.1f, 100.f);
     MVMatrix   = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -5));
@@ -231,8 +163,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     glfwSetCursorPosCallback(window, &cursor_position_callback);
     glfwSetWindowSizeCallback(window, &size_callback);
 
-    //getting cursor position
-
+    // getting cursor position
 
     std::vector<glm::vec3> randAxes;
     std::vector<glm::vec3> randPoses;
@@ -248,90 +179,95 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     glimac::FreeflyCamera camera;
 
+    GLint uKd             = glGetUniformLocation(program.getGLId(), "uKd");
+    GLint uKs             = glGetUniformLocation(program.getGLId(), "uKs");
+    GLint uShininess      = glGetUniformLocation(program.getGLId(), "uShininess");
+    GLint uLightDir_vs    = glGetUniformLocation(program.getGLId(), "uLightDir_vs");
+    GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
+
+    std::vector<glm::vec3> _uKd;
+    std::vector<glm::vec3> _uKs;
+    std::vector<float>     _uShininess;
+    std::vector<glm::vec3> _uLightIntensity;
+
+    for (size_t i = 0; i < nbSphere + 1; i++) {
+        _uKd.push_back(glm::vec3(glm::linearRand(0.f, 1.0f), glm::linearRand(0.f, 1.0f), glm::linearRand(0.f, 1.0f)));
+        _uKs.push_back(glm::vec3(glm::linearRand(0.f, 1.0f), glm::linearRand(0.f, 1.0f), glm::linearRand(0.f, 1.0f)));
+        _uLightIntensity.push_back(glm::vec3(glm::linearRand(0.f, 1.0f), glm::linearRand(0.f, 1.0f), glm::linearRand(0.f, 1.0f)));
+        _uShininess.push_back(glm::linearRand(0.f, 1.0f));
+    }
+
+    glm::vec3 _uLightDir_vs = glm::vec3(1, 1, 1);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.f, 0.75f, 0.75f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-        //camera.moveFront(myInputs.yoffset);
-        if(myInputs.currentPosition.x < myInputs.previousPosition.x && myInputs.mouseButton == -1){
-            camera.rotateLeft(1.f);
-        }
-        if(myInputs.currentPosition.y < myInputs.previousPosition.y && myInputs.mouseButton == -1){
-            camera.rotateUp(1.f);
-        }
-        if(myInputs.currentPosition.x > myInputs.previousPosition.x && myInputs.mouseButton == -1){
+        // camera.moveFront(myInputs.yoffset);
+        if (myInputs.currentPosition.x < myInputs.previousPosition.x && myInputs.mouseButton == -1) {
             camera.rotateLeft(-1.f);
         }
-        if(myInputs.currentPosition.y > myInputs.previousPosition.y && myInputs.mouseButton == -1){
+        if (myInputs.currentPosition.y < myInputs.previousPosition.y && myInputs.mouseButton == -1) {
             camera.rotateUp(-1.f);
         }
-        if(myInputs.key == Z){
+        if (myInputs.currentPosition.x > myInputs.previousPosition.x && myInputs.mouseButton == -1) {
+            camera.rotateLeft(1.f);
+        }
+        if (myInputs.currentPosition.y > myInputs.previousPosition.y && myInputs.mouseButton == -1) {
+            camera.rotateUp(1.f);
+        }
+        if (myInputs.key == Z) {
             camera.moveFront(0.1f);
             myInputs.key = -1;
         }
-        if(myInputs.key == Q){
-            camera.moveLeft(0.1f);    
+        if (myInputs.key == Q) {
+            camera.moveLeft(0.1f);
             myInputs.key = -1;
         }
-        if(myInputs.key == S){
+        if (myInputs.key == S) {
             camera.moveFront(-0.1f);
             myInputs.key = -1;
         }
-        if(myInputs.key == D){
+        if (myInputs.key == D) {
             camera.moveLeft(-0.1f);
             myInputs.key = -1;
         }
 
         myInputs.previousPosition = myInputs.currentPosition;
 
-        myInputs.yoffset = 0;
+        myInputs.yoffset     = 0;
         transformationsMv[0] = camera.getViewMatrix();
 
         glBindVertexArray(vao);
 
-        earthProgram.m_Program.use();
-
-        glUniform1i(earthProgram.uTexture1, 0);
-        glUniform1i(earthProgram.uTexture2, 1);
-
         MVMatrix = glm::rotate(transformationsMv[0], glimac::getTime(), glm::vec3(0, 1, 0));
 
-        glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
-        glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
-        glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureEarth); // la texture earthTexture est bindée sur l'unité GL_TEXTURE0
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textureCloud);
-
+        glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
+        glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
+        glUniformMatrix4fv(uNormalMatrix, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-
-        moonProgram.m_Program.use();
-
-        glUniform1i(moonProgram.uTexture, 0);
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
         for (size_t i = 1; i < nbSphere; i++) {
+            glUniform3fv(uKd, 1, glm::value_ptr(_uKd[i]));
+            glUniform3fv(uKs, 1, glm::value_ptr(_uKs[i]));
+            glUniform1f(uShininess, _uShininess[i]);
+
+            glm::vec3 rotatedLightDir = _uLightDir_vs * glm::mat3(glm::rotate(glm::mat4(1.0f), glimac::getTime(), glm::vec3(0.0f, 0.0f, 1.0f)));
+
+            glUniform3fv(uLightDir_vs, 1, glm::value_ptr(glm::mat3(transformationsMv[0]) * rotatedLightDir));
+            glUniform3fv(uLightIntensity, 1, glm::value_ptr(_uLightIntensity[i]));
+
             transformationsMv[i] = glm::rotate(transformationsMv[0], glimac::getTime(), randAxes[i]);
             transformationsMv[i] = glm::translate(transformationsMv[i], randPoses[i]);         // Translation * Rotation * Translation
             transformationsMv[i] = glm::scale(transformationsMv[i], glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
-            glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * transformationsMv[i]));
-            glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(transformationsMv[i]));
-            glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureMoon); // la texture earthTexture est bindée sur l'unité GL_TEXTURE0
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
+            glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * transformationsMv[i]));
+            glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(transformationsMv[i]));
+            glUniformMatrix4fv(uNormalMatrix, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         }
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureEarth);
 
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
 
