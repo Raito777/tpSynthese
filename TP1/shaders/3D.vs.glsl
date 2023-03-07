@@ -8,13 +8,20 @@ uniform mat4 uMVPMatrix;
 uniform mat4 uMVMatrix;
 uniform mat4 uNormalMatrix;
 
-out vec4 vPosition;
-out vec4 vNormal;
-out vec2 vTextureCoordinate;
+//Variables de sorties
+out vec3 vPosition_vs;
+out vec3 vNormal_vs;
+out vec2 vTexCoords;
 
 void main() {
-    vPosition = uMVMatrix * vec4(aPosition,1);
-    vNormal = uNormalMatrix * vec4(aNormal,0);
-    vTextureCoordinate = aTexCoords;
-    gl_Position = uMVPMatrix * vec4(aPosition,1);
+    //Passage en coordonnées homogènes
+    vec4 vertexPosition = vec4(aPosition, 1);
+    vec4 vertexNormal = vec4(aNormal, 1);
+    
+    //Calcul des variables de sorties
+    vPosition_vs = vec3(uMVMatrix * vertexPosition);
+    vNormal_vs = vec3(uNormalMatrix * vertexNormal);
+    vTexCoords = aTexCoords;
+    
+    gl_Position = uMVPMatrix * vertexPosition;
 };
