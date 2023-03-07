@@ -100,7 +100,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     glimac::FilePath applicationPath(argv[0]);
 
     glimac::Program program = glimac::loadProgram(applicationPath.dirPath() + "TP1/shaders/3D.vs.glsl",
-                                                  applicationPath.dirPath() + "TP1/shaders/directionallight.fs.glsl");
+                                                  applicationPath.dirPath() + "TP1/shaders/pointlight.fs.glsl");
 
     program.use();
 
@@ -183,7 +183,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     GLint uKd             = glGetUniformLocation(program.getGLId(), "uKd");
     GLint uKs             = glGetUniformLocation(program.getGLId(), "uKs");
     GLint uShininess      = glGetUniformLocation(program.getGLId(), "uShininess");
-    GLint uLightDir_vs    = glGetUniformLocation(program.getGLId(), "uLightDir_vs");
+    GLint uLightPos_vs    = glGetUniformLocation(program.getGLId(), "uLightPos_vs");
     GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
 
     std::vector<glm::vec3> _uKd;
@@ -198,25 +198,25 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         _uShininess.push_back(glm::linearRand(0.f, 1.0f));
     }
 
-    glm::vec3 _uLightDir_vs = glm::vec3(1, 1, 1);
+    glm::vec3 _uLightPos_vs = glm::vec3(0.5, 0.5, 0.5);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.f, 0.75f, 0.75f, 1.f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // camera.moveFront(myInputs.yoffset);
         if (myInputs.currentPosition.x < myInputs.previousPosition.x && myInputs.mouseButton == -1) {
-            camera.rotateLeft(-1.f);
+            camera.rotateLeft(-0.7f);
         }
         if (myInputs.currentPosition.y < myInputs.previousPosition.y && myInputs.mouseButton == -1) {
-            camera.rotateUp(1.f);
+            camera.rotateUp(0.7f);
         }
         if (myInputs.currentPosition.x > myInputs.previousPosition.x && myInputs.mouseButton == -1) {
-            camera.rotateLeft(1.f);
+            camera.rotateLeft(0.7f);
         }
         if (myInputs.currentPosition.y > myInputs.previousPosition.y && myInputs.mouseButton == -1) {
-            camera.rotateUp(-1.f);
+            camera.rotateUp(-0.7f);
         }
         if (myInputs.key == Z) {
             camera.moveFront(0.1f);
@@ -242,7 +242,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         glBindVertexArray(vao);
 
-        MVMatrix = glm::rotate(transformationsMv[0], glimac::getTime(), glm::vec3(0, 1, 0));
+        MVMatrix = glm::rotate(transformationsMv[0], 0.f, glm::vec3(0, 1, 0));
 
         glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
         glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
@@ -253,16 +253,19 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         // glm::vec3 rotatedLightDir = _uLightDir_vs * glm::mat3(glm::rotate(glm::mat4(1.0f), glimac::getTime(), glm::vec3(0.0f, 0.0f, 1.0f)));
         // glUniform3fv(uLightDir_vs, 1, glm::value_ptr(glm::mat3(transformationsMv[0]) * rotatedLightDir));
 
-        glUniform3fv(uLightDir_vs, 1, glm::value_ptr(glm::vec3(glm::vec4(1, 1, 1, 0) * glm::rotate(glm::mat4(1.0f), glimac::getTime(), glm::vec3(0, 1, 0)) * camera.getViewMatrix())));
-        glUniform3fv(uLightIntensity, 1, glm::value_ptr(glm::vec3(.8, .8, 0.8)));
-        glUniform3fv(uAmbient, 1, glm::value_ptr(glm::vec3(0.1, 0.1, 0.1)));
+        // glUniform3fv(uLightDir_vs, 1, glm::value_ptr(glm::vec3(glm::vec4(1, 1, 1, 0) * glm::rotate(glm::mat4(1.0f), glimac::getTime(), glm::vec3(0, 1, 0)) * camera.getViewMatrix())));
+
+        glUniform3fv(uLightPos_vs, 1, glm::value_ptr(glm::vec3(camera.getViewMatrix() * glm::vec4(0.5, 0.5, 0.5, 0))));
+
+        glUniform3fv(uLightIntensity, 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+        glUniform3fv(uAmbient, 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
 
         for (size_t i = 1; i < nbSphere; i++) {
             glUniform3fv(uKd, 1, glm::value_ptr(_uKd[i]));
             glUniform3fv(uKs, 1, glm::value_ptr(_uKs[i]));
             glUniform1f(uShininess, _uShininess[i]);
 
-            transformationsMv[i] = glm::rotate(transformationsMv[0], glimac::getTime(), randAxes[i]);
+            transformationsMv[i] = glm::rotate(transformationsMv[0], 0.f, randAxes[i]);
             transformationsMv[i] = glm::translate(transformationsMv[i], randPoses[i]);         // Translation * Rotation * Translation
             transformationsMv[i] = glm::scale(transformationsMv[i], glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
             glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * transformationsMv[i]));
