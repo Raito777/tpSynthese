@@ -14,12 +14,12 @@ public:
     };
     void moveLeft(float t)
     {
-        this->m_Position.x += -t;
+        this->m_Position += t * m_LeftVector;
         this->computeDirectionVectors();
     };
     void moveFront(float t)
     {
-        this->m_Position += -t * this->m_UpVector;
+        this->m_Position += t * this->m_FrontVector;
         this->computeDirectionVectors();
     };
     void rotateLeft(float degrees)

@@ -198,7 +198,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         _uShininess.push_back(glm::linearRand(0.f, 1.0f));
     }
 
-    glm::vec3 _uLightPos_vs = glm::vec3(0.5, 0.5, 0.5);
+    glm::vec3 light = glm::vec3(0.7, 0.8, 0.3);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
@@ -207,13 +207,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         // camera.moveFront(myInputs.yoffset);
         if (myInputs.currentPosition.x < myInputs.previousPosition.x && myInputs.mouseButton == -1) {
-            camera.rotateLeft(-0.7f);
+            camera.rotateLeft(0.7f);
         }
         if (myInputs.currentPosition.y < myInputs.previousPosition.y && myInputs.mouseButton == -1) {
             camera.rotateUp(0.7f);
         }
         if (myInputs.currentPosition.x > myInputs.previousPosition.x && myInputs.mouseButton == -1) {
-            camera.rotateLeft(0.7f);
+            camera.rotateLeft(-0.7f);
         }
         if (myInputs.currentPosition.y > myInputs.previousPosition.y && myInputs.mouseButton == -1) {
             camera.rotateUp(-0.7f);
@@ -242,7 +242,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         glBindVertexArray(vao);
 
-        MVMatrix = glm::rotate(transformationsMv[0], 0.f, glm::vec3(0, 1, 0));
+        MVMatrix = glm::rotate(transformationsMv[0], glimac::getTime(), glm::vec3(0, 1, 0));
 
         glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
         glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
@@ -255,9 +255,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
         // glUniform3fv(uLightDir_vs, 1, glm::value_ptr(glm::vec3(glm::vec4(1, 1, 1, 0) * glm::rotate(glm::mat4(1.0f), glimac::getTime(), glm::vec3(0, 1, 0)) * camera.getViewMatrix())));
 
-        glUniform3fv(uLightPos_vs, 1, glm::value_ptr(glm::vec3(camera.getViewMatrix() * glm::vec4(0.5, 0.5, 0.5, 0))));
+        // glm::vec3 uLightPos = glm::vec3(glm::rotate(glm::mat4(1.f), glimac::getTime(), glm::vec3(0, 1, 0) * glm::vec4(light, 1)));
+        glm::vec3 uLightPos = glm::vec3(glm::rotate(glm::mat4(1.f), glimac::getTime(), glm::vec3(0, 1, 0)) * glm::vec4(light, 1));
 
-        glUniform3fv(uLightIntensity, 1, glm::value_ptr(glm::vec3(2.f, 2.f, 2.f)));
+        glm::vec3 uMVLightPos = glm::vec3(camera.getViewMatrix() * glm::vec4(uLightPos, 1));
+
+        glUniform3fv(uLightPos_vs, 1, glm::value_ptr(uMVLightPos));
+        glUniform3fv(uLightIntensity, 1, glm::value_ptr(glm::vec3(0.7f, 0.7f, 0.7f)));
         glUniform3fv(uAmbient, 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.f)));
 
         for (size_t i = 1; i < nbSphere; i++) {
@@ -265,7 +269,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
             glUniform3fv(uKs, 1, glm::value_ptr(_uKs[i]));
             glUniform1f(uShininess, _uShininess[i]);
 
-            transformationsMv[i] = glm::rotate(transformationsMv[0], 0.f, randAxes[i]);
+            transformationsMv[i] = glm::rotate(transformationsMv[0], glimac::getTime(), randAxes[i]);
             transformationsMv[i] = glm::translate(transformationsMv[i], randPoses[i]);         // Translation * Rotation * Translation
             transformationsMv[i] = glm::scale(transformationsMv[i], glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
             glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * transformationsMv[i]));

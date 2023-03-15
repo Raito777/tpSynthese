@@ -17,8 +17,8 @@ uniform vec3 uLightPos_vs;
 uniform vec3 uLightIntensity;
 
 vec3 blinnPhong(){
-        float d = distance(normalize(uLightPos_vs), normalize(vPosition_vs));
-        vec3 Li = uLightIntensity / (d * d);
+        float d = distance(uLightPos_vs, vPosition_vs);
+        vec3 Li = (uLightIntensity / (d * d));
         vec3 N = vNormal_vs;
         vec3 w0 = normalize(-vPosition_vs);
         vec3 wi = normalize(uLightPos_vs - vPosition_vs);
